@@ -1,0 +1,33 @@
+{
+  "case_id": "SP-2026-09412",
+  "organ_site": "Breast",
+  "histologic_type": "Invasive Ductal Carcinoma (NST)",
+  "histologic_grade": "Nottingham Grade 3",
+  "tumor_size_cm": 3.4,
+  "margins_status": "Negative, closest deep margin 3.5 mm",
+  "lymphovascular_invasion": true,
+  "lymph_nodes_positive": 2,
+  "lymph_nodes_examined": 14,
+  "pT_stage": "pT2",
+  "pN_stage": "pN1a",
+  "biomarkers": {
+    "ER": "Positive (95%, strong)",
+    "PR": "Positive (80%, strong)",
+    "HER2": "2+ (Equivocal)",
+    "Ki-67": "35%"
+  },
+  "slides": [
+    {
+      "slide_id": "SLIDE-01-HE",
+      "stain_type": "H&E",
+      "blur_score": 0.08,
+      "tissue_fold_pct": 1.2
+    },
+    {
+      "slide_id": "SLIDE-02-HER2",
+      "stain_type": "HER2",
+      "blur_score": 0.12,
+      "tissue_fold_pct": 0.5
+    }
+  ]
+}

@@ -212,8 +212,8 @@ class Enrichment2Hl7FhirR4DiagnosticreportResourceGenerationEngine:
 # 5. IMPLEMENTATION
 # =============================================================================
 @dataclass
-class ImplementationEngineResult:
-    feature_name: str = "Implementation"
+class FhirExportImplementationEngineResult:
+    feature_name: str = "Implementation: FHIR Export"
     status: str = "OPTIMAL"
     score: float = 0.0
     metrics: Dict[str, Any] = field(default_factory=dict)
@@ -221,16 +221,16 @@ class ImplementationEngineResult:
     recommendations: List[str] = field(default_factory=list)
     timestamp: str = field(default_factory=lambda: datetime.datetime.now(datetime.timezone.utc).isoformat())
 
-class ImplementationEngine:
+class FhirExportImplementationEngine:
     """
     Implementation: **File**: pathmind/fhir_export.py (new file)
     """
     def __init__(self, threshold: float = 1.0, config: Optional[Dict[str, Any]] = None):
         self.threshold = threshold
         self.config = config or {}
-        self.history: List[ImplementationEngineResult] = []
+        self.history: List[FhirExportImplementationEngineResult] = []
 
-    def evaluate(self, primary_value: float, secondary_value: float = 0.0, **kwargs) -> ImplementationEngineResult:
+    def evaluate(self, primary_value: float, secondary_value: float = 0.0, **kwargs) -> FhirExportImplementationEngineResult:
         alerts = []
         recs = []
         status = "OPTIMAL"
@@ -247,8 +247,8 @@ class ImplementationEngine:
         else:
             recs.append("Parameters nominal under standard operating bounds.")
 
-        res = ImplementationEngineResult(
-            feature_name="Implementation",
+        res = FhirExportImplementationEngineResult(
+            feature_name="Implementation: FHIR Export",
             status=status,
             score=score,
             metrics={"primary": primary_value, "secondary": secondary_value, **kwargs},
@@ -312,8 +312,8 @@ class Enrichment3InterobserverAgreementTrackingCohensKappaEngine:
 # 7. IMPLEMENTATION
 # =============================================================================
 @dataclass
-class ImplementationEngineResult:
-    feature_name: str = "Implementation"
+class KappaTrackingImplementationEngineResult:
+    feature_name: str = "Implementation: Kappa Tracking"
     status: str = "OPTIMAL"
     score: float = 0.0
     metrics: Dict[str, Any] = field(default_factory=dict)
@@ -321,16 +321,16 @@ class ImplementationEngineResult:
     recommendations: List[str] = field(default_factory=list)
     timestamp: str = field(default_factory=lambda: datetime.datetime.now(datetime.timezone.utc).isoformat())
 
-class ImplementationEngine:
+class KappaTrackingImplementationEngine:
     """
     Implementation: **File**: pathmind/agents.py — add KappaTrackingAgent
     """
     def __init__(self, threshold: float = 1.0, config: Optional[Dict[str, Any]] = None):
         self.threshold = threshold
         self.config = config or {}
-        self.history: List[ImplementationEngineResult] = []
+        self.history: List[KappaTrackingImplementationEngineResult] = []
 
-    def evaluate(self, primary_value: float, secondary_value: float = 0.0, **kwargs) -> ImplementationEngineResult:
+    def evaluate(self, primary_value: float, secondary_value: float = 0.0, **kwargs) -> KappaTrackingImplementationEngineResult:
         alerts = []
         recs = []
         status = "OPTIMAL"
@@ -347,8 +347,8 @@ class ImplementationEngine:
         else:
             recs.append("Parameters nominal under standard operating bounds.")
 
-        res = ImplementationEngineResult(
-            feature_name="Implementation",
+        res = KappaTrackingImplementationEngineResult(
+            feature_name="Implementation: Kappa Tracking",
             status=status,
             score=score,
             metrics={"primary": primary_value, "secondary": secondary_value, **kwargs},
@@ -416,22 +416,20 @@ class PathmindcopilotEnrichmentSuite:
     def __init__(self):
         self.overviewengine = OverviewEngine()
         self.enrichment1capsynopt = Enrichment1CapSynopticChecklistCompletionScoringEngine()
-        self.implementationengine = ImplementationEngine()
+        self.fhir_export_implementation = FhirExportImplementationEngine()
         self.enrichment2hl7fhirr4 = Enrichment2Hl7FhirR4DiagnosticreportResourceGenerationEngine()
-        self.implementationengine = ImplementationEngine()
+        self.kappa_tracking_implementation = KappaTrackingImplementationEngine()
         self.enrichment3interobse = Enrichment3InterobserverAgreementTrackingCohensKappaEngine()
-        self.implementationengine = ImplementationEngine()
         self.enrichment4longitudi = Enrichment4LongitudinalBiomarkerDeltaAnalysisEngine()
 
     def execute_all(self, primary_val: float = 1.5, secondary_val: float = 0.5) -> Dict[str, Any]:
         results = {}
         results["OverviewEngine"] = self.overviewengine.evaluate(primary_val, secondary_val)
         results["Enrichment1CapSynopticChecklistCompletionScoringEngine"] = self.enrichment1capsynopt.evaluate(primary_val, secondary_val)
-        results["ImplementationEngine"] = self.implementationengine.evaluate(primary_val, secondary_val)
+        results["FhirExportImplementationEngine"] = self.fhir_export_implementation.evaluate(primary_val, secondary_val)
         results["Enrichment2Hl7FhirR4DiagnosticreportResourceGenerationEngine"] = self.enrichment2hl7fhirr4.evaluate(primary_val, secondary_val)
-        results["ImplementationEngine"] = self.implementationengine.evaluate(primary_val, secondary_val)
+        results["KappaTrackingImplementationEngine"] = self.kappa_tracking_implementation.evaluate(primary_val, secondary_val)
         results["Enrichment3InterobserverAgreementTrackingCohensKappaEngine"] = self.enrichment3interobse.evaluate(primary_val, secondary_val)
-        results["ImplementationEngine"] = self.implementationengine.evaluate(primary_val, secondary_val)
         results["Enrichment4LongitudinalBiomarkerDeltaAnalysisEngine"] = self.enrichment4longitudi.evaluate(primary_val, secondary_val)
         return results
 

@@ -1,7 +1,7 @@
 # Pathmind Copilot
 
-> **Domain:** Clinical Decision Support & Biomedical Computing  
-> **Reference Guidelines & Standards:** `Standard Clinical Formulations & ISO/IEC Quality Frameworks`
+> **Domain:** Clinical Decision Support & Biomedical Computing
+> **Standards:** CAP / CLSI / ISO / HIPAA Safe Harbor
 
 <div align="center">
 
@@ -18,80 +18,168 @@
 
 ## 📖 What It Does
 
-**Pathmind Copilot** is an advanced analytical and computational platform implementing 5/5 passing.
+**Pathmind Copilot** is an advanced clinical decision support platform that provides:
+
+- **Surgical Pathology Synoptic Reporting**: Automated validation of synoptic reports against CAP Cancer Protocols
+- **Digital Pathology Slide QC**: Automated quality control for whole-slide imaging scans
+- **Biomarker Concordance**: IHC triaging and HER2 reflex testing recommendations
+- **Multi-Agent Consensus**: Distributed worker architecture for comprehensive analysis
+- **Zero-PHI Protection**: AST and regex-based outbound guard preventing protected health information leakage
 
 ---
 
-## ⚙️ Key Capabilities & Algorithmic Modules
+## 🚀 Quickstart
 
-- **Deterministic Calculation Engine**: Strict compliance with standard reference formulations and thresholds.
-- **Risk & Urgency Classification**: Multi-tier categorization with automated clinical/operational action recommendations.
-- **Validation & Guardrails**: Rigorous input bounds checking and anomaly detection.
+### Prerequisites
+- Python 3.9+
+- pip or virtual environment
 
----
+### Installation
 
-## 💻 CLI Quickstart & Usage
-
-### 1. Guided Interactive Mode
 ```bash
-python cli.py
+# Clone the repository
+git clone https://github.com/abusuraihsakhri/pathmind-copilot.git
+cd pathmind-copilot
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install fastapi uvicorn pydantic pytest
 ```
 
-### 2. Direct Parameterized Evaluation
+### Configuration
+
 ```bash
-python cli.py --task-id <value> --target <value> --primary <value> --secondary <value>
+# Copy environment template
+cp .env.example .env
+
+# Edit .env and set your secure audit key
+# Generate a strong key: python -c "import secrets; print(secrets.token_hex(32))"
 ```
 
-### Parameter Reference
-- `--task-id`: Specifies input measurement or parameter value.
-- `--target`: Specifies input measurement or parameter value.
-- `--primary`: Specifies input measurement or parameter value.
-- `--secondary`: Specifies input measurement or parameter value.
-- `--critical`: Specifies input measurement or parameter value.
-- `--status`: Specifies input measurement or parameter value.
-- `--input`: Specifies input measurement or parameter value.
-- `--output`: Specifies input measurement or parameter value.
+---
 
-### Input Data Schema
+## 💻 CLI Usage
 
-| Field | Description | Requirement |
-|:------|:------------|:------------|
-| `suite_name` | Parameter / observation metric | Required |
-| `system_slug` | Parameter / observation metric | Required |
-| `standard_reference` | Parameter / observation metric | Required |
-| `test_cases` | Parameter / observation metric | Required |
+### 1. Audit a Synoptic Report (Pathology Domain)
+```bash
+python -m pathmind.cli audit
+```
+
+### 2. Run Distributed Component Evaluation
+```bash
+python cli.py audit --task-id TASK-001 --target SPECIMEN-01 --primary 28.5 --secondary 14.2 --critical --status DISCORDANT
+```
+
+### 3. Batch Process CSV Records
+```bash
+python cli.py batch -i input.csv -o results.csv
+```
+
+### 4. Interactive Chat
+```bash
+python cli.py chat "What are the CAP guidelines?"
+```
+
+### 5. Verify Audit Trail Integrity
+```bash
+python cli.py verify-audit
+```
+
+### 6. Launch REST API Server
+```bash
+python cli.py serve --host 127.0.0.1 --port 8000
+```
 
 ---
 
-## 🛡️ Security & Enterprise Architecture
+## 🛡️ Security Architecture
 
-* **Zero-PHI Outbound Interceptor:** Active AST and regex inspection blocking SSNs, MRNs, phone numbers, and patient identifiers.
-* **Tamper-Evident HMAC-SHA256 Audit Trail:** Chained, cryptographically signed logs for every evaluation and state transition.
-* **Air-Gapped LLM Reasoning Adapter:** Agnostic integration for local Ollama instances (`llama3`, `mistral`), Claude 3.5 Sonnet, GPT-4o, and deterministic test mocks.
-* **Active Learning Bayesian Calibration:** Dynamic tracker updating worker reliability weights and monitoring Brier calibration drift.
-* **FastAPI & Prometheus Telemetry:** Exposes OpenAPI 3.1 REST endpoints and operational Prometheus metrics (`/metrics`).
+### Zero-PHI Outbound Interceptor
+Active regex inspection blocking:
+- Medical Record Numbers (MRN)
+- Social Security Numbers
+- Phone numbers and email addresses
+- Dates of birth
+- Patient names (common patterns)
+
+### HMAC-SHA256 Audit Trail
+- Cryptographically chained logs for every evaluation
+- Tamper-evident verification via `verify-audit` command
+- Requires `AUDIT_SECRET_KEY` environment variable
+
+### Input Validation
+- Pydantic v2 schemas with bounds checking
+- Resource limit enforcement
+- CSV parsing error handling
 
 ---
 
-## 🧪 Testing & Verification
-
-Run the automated test suite:
+## 🧪 Testing
 
 ```bash
+# Run all tests
 pytest -v
-```
 
-Execute high-throughput batch simulation benchmarks:
+# Run with coverage
+pytest -v --cov=agents --cov=pathmind
 
-```bash
-python simulator.py --tasks 1000 --concurrency 8
+# Run specific test modules
+pytest tests/test_pathmind.py -v
+pytest tests/test_enrichment.py -v
 ```
 
 ---
 
-## 🐳 Container Deployment
+## 🐳 Docker Deployment
 
 ```bash
+# Create .env file first
+echo "AUDIT_SECRET_KEY=your-secure-key-here" > .env
+
+# Build and run
+docker-compose up --build
+
+# Or manually
 docker build -t pathmind-copilot .
-docker run -p 8000:8000 pathmind-copilot
+docker run -p 8000:8000 --env-file .env pathmind-copilot
 ```
+
+---
+
+## 📁 Project Structure
+
+```
+pathmind-copilot/
+├── agents/              # Enterprise distributed component system
+│   ├── api.py           # FastAPI REST endpoints
+│   ├── base.py          # Security, PHI guard, audit trail
+│   ├── models.py        # Pydantic schemas
+│   ├── supervisor.py    # Master orchestrator
+│   ├── workers.py       # Specialized evaluation workers
+│   ├── llm_factory.py   # LLM provider abstraction
+│   ├── metrics.py       # Prometheus metrics
+│   ├── learning.py      # Bayesian calibration engine
+│   └── streamer.py      # WebSocket telemetry
+├── pathmind/            # Pathology-specific domain modules
+│   ├── agents.py        # Slide QC, Synoptic Validator, IHC Triager
+│   ├── models.py        # Domain data models
+│   ├── cli.py           # Domain-specific CLI
+│   └── server.py        # FastAPI server factory
+├── tests/               # Test suite
+├── web/                 # Operations console (HTML)
+├── cli.py               # Main CLI entry point
+├── simulator.py         # High-throughput simulation
+├── enrichment.py        # Extended feature engines
+├── Dockerfile
+├── docker-compose.yml
+└── pyproject.toml
+```
+
+---
+
+## 📝 License
+
+MIT License. See [LICENSE](LICENSE) for details.

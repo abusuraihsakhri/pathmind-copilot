@@ -24,6 +24,8 @@ class SlideQCAgent:
 
     def evaluate(self, slide: SlideArtifact) -> List[AgentAlert]:
         alerts = []
+        # A repeat assessment must clear stale quality status.
+        slide.qc_status = SlideQCStatus.PASS
         if slide.blur_score > self.blur_threshold:
             slide.qc_status = SlideQCStatus.SUBOPTIMAL_BLUR
             alerts.append(
@@ -141,7 +143,7 @@ class ImmunohistochemistryTriagerAgent:
         bio = report.biomarkers
 
         # Rule 1: HER2 Equivocal (2+) requires reflex testing
-        if "HER2" in bio:
+        if report.organ_site.strip().lower() == "breast" and "HER2" in bio:
             her2_val = str(bio["HER2"]).upper()
             if "2+" in her2_val or "EQUIVOCAL" in her2_val:
                 if "FISH" not in bio and "ISH" not in bio and "DUAL-ISH" not in bio:
@@ -158,11 +160,16 @@ class ImmunohistochemistryTriagerAgent:
                     )
 
         # Rule 2: High Grade TNBC check
-        if report.histologic_grade and "3" in report.histologic_grade:
-            er_pos = "pos" in str(bio.get("ER", "")).lower()
-            pr_pos = "pos" in str(bio.get("PR", "")).lower()
-            her2_pos = "3+" in str(bio.get("HER2", "")).lower() or "pos" in str(bio.get("HER2", "")).lower()
-            if not er_pos and not pr_pos and not her2_pos and len(bio) >= 3:
+        if (report.organ_site.strip().lower() == "breast"
+                and report.histologic_grade and "3" in report.histologic_grade
+                and all(marker in bio for marker in ("ER", "PR", "HER2"))):
+            # Absent/indeterminate results are NOT evidence of marker negativity.
+            er = str(bio["ER"]).strip().lower()
+            pr = str(bio["PR"]).strip().lower()
+            her2 = str(bio["HER2"]).strip().lower()
+            def negative(value: str) -> bool:
+                return value in {"0", "0%", "0+", "1+", "neg", "-"} or value.startswith("negative")
+            if negative(er) and negative(pr) and negative(her2):
                 alerts.append(
                     AgentAlert(
                         alert_id=str(uuid.uuid4())[:8],

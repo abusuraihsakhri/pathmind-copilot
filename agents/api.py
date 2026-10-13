@@ -1,8 +1,10 @@
 """
 FastAPI REST API Server for Pathmind Copilot.
 """
-from typing import Dict, Any, List
-from fastapi import FastAPI, HTTPException
+import hmac
+import os
+
+from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel
 from .base import AuditLogger, PHIGuard, SecurityException
 from .models import SystemTaskPayload, ConsensusDossier
@@ -54,5 +56,11 @@ def api_chat(req: ChatRequest):
 
 
 @app.get("/api/audit/logs")
-def api_audit_logs():
+def api_audit_logs(x_audit_token: str = Header(default="")):
+    """Ledger metadata requires a distinct read token; never expose it by default."""
+    configured_token = os.getenv("AUDIT_READ_TOKEN", "")
+    if not configured_token:
+        raise HTTPException(status_code=503, detail="Audit log access is disabled")
+    if not hmac.compare_digest(x_audit_token, configured_token):
+        raise HTTPException(status_code=403, detail="Audit log access denied")
     return {"audit_trail": AuditLogger.get_trail(), "verified": AuditLogger.verify_integrity()}

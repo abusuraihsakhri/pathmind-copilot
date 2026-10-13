@@ -249,10 +249,10 @@ class PathMindCoordinator:
         if "summary" in q or "status" in q or "cases" in q:
             total_cases = len(self.case_history)
             blocked_cases = sum(1 for c in self.case_history.values() if c["signoff_readiness"] == "SIGNOFF_BLOCKED")
-            return f"PathMind ATLAS currently tracking {total_cases} cases. {blocked_cases} cases have sign-out blockers requiring attention."
+            return f"PathMind Copilot has reviewed {total_cases} in-memory cases. {blocked_cases} have flags under this limited demonstration rule set."
         elif "cap" in q or "synoptic" in q:
-            return "All synoptic templates are continuously audited against CAP Cancer Protocols (College of American Pathologists 2024 Release). Key rules: mandatory tumor dimensions, margin millimeter clearance, and pTNM concordance."
+            return "CAP synoptic protocols vary by organ, procedure, and edition. This demonstration only checks selected fields such as tumor size, margin presence and node count; it does not validate complete CAP compliance."
         elif "her2" in q:
-            return "Per ASCO/CAP 2023 Guidelines: HER2 IHC 0/1+ is Negative, 2+ is Equivocal (requiring reflex dual-probe FISH/ISH), and 3+ is Positive (>=10% intense circumferential membrane staining)."
+            return "For breast carcinoma, an equivocal HER2 IHC result may require reflex ISH according to the applicable ASCO/CAP algorithm. This tool cannot interpret an individual case or replace current guidance."
         else:
-            return f"PathMind Copilot standing by. Active monitoring enabled across Slide QC, Synoptic CAP protocols, and Biomarker triaging."
+            return "PathMind Copilot can review a submitted draft with limited rules. No background monitoring or continuous guideline updates occur."

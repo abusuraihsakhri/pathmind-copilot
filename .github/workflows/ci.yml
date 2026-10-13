@@ -1,40 +1,70 @@
-name: Pathmind Copilot CI/CD & Security Verification
+name: Tests and security checks
 
 on:
   push:
-    branches: [ master, main ]
+    branches: [master, main]
   pull_request:
-    branches: [ master, main ]
+    branches: [master, main]
+
+permissions:
+  contents: read
 
 jobs:
-  test-and-audit:
+  test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
+    env:
+      # Ephemeral test key only; production still requires an external secret.
+      AUDIT_SECRET_KEY: ci-test-audit-key-not-for-production
 
     steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install fastapi uvicorn pydantic pytest
-
-    - name: Run Pytest Suite
-      run: |
-        pytest -v
-
-    - name: Security SAST & Zero-PHI Audit
-      run: |
-        python -c "
-        from agents.base import PHIGuard, AuditLogger
-        import pytest
-        assert AuditLogger.verify_integrity() is True
-        print('Security & Zero-PHI Audit Passed!')
-        "
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install project and test dependencies
+        run: python -m pip install -e ".[server,test]"
+      - name: Compile Python sources
+        run: python -m compileall -q agents pathmind cli.py simulator.py enrichment.py
+      - name: Run tests
+        run: python -m pytest -q
+      - name: Verify sample CLI
+        run: |
+          pathmind sample > /dev/null
+          pathmind audit > /dev/null
+          pathmind-ops audit --primary 12 --secondary 3 --status NOMINAL > /dev/null
+          pathmind-ops verify-audit
+      - name: Check browser script syntax
+        run: |
+          python - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          import subprocess
+          import tempfile
+          class ScriptExtractor(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.recording = False
+                  self.scripts = []
+              def handle_starttag(self, tag, attrs):
+                  if tag == "script" and not dict(attrs).get("src"):
+                      self.recording = True
+              def handle_data(self, data):
+                  if self.recording:
+                      self.scripts.append(data)
+              def handle_endtag(self, tag):
+                  if tag == "script":
+                      self.recording = False
+          p = ScriptExtractor()
+          p.feed(Path("web/index.html").read_text())
+          with tempfile.NamedTemporaryFile(suffix=".js", mode="w") as script:
+              script.write("\n".join(p.scripts))
+              script.flush()
+              subprocess.run(["node", "--check", script.name], check=True)
+          PY
+      - name: Smoke-test browser rules
+        run: node tests/browser_rules.test.cjs

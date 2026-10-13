@@ -57,7 +57,7 @@ def main(argv=None):
         dossier = supervisor.process_task(payload)
         print("=" * 80)
         print(f"  PATHMIND COPILOT")
-        print(f"  Domain: Clinical & Biomedical AI | Standard: CAP / CLSI / ISO Standards")
+        print("  Illustrative rules only; not a validated clinical assessment")
         print(f"  Dossier ID: {dossier.dossier_id} | Urgency: [{dossier.overall_urgency.value}]")
         print("=" * 80)
         for a in dossier.alerts:
@@ -78,7 +78,7 @@ def main(argv=None):
         trail = AuditLogger.get_trail()
         valid = AuditLogger.verify_integrity()
         print(f"Audit Trail Blocks: {len(trail)} | Cryptographic Integrity Verified: {valid}")
-        return 0
+        return 0 if valid else 1
 
     if args.command == "batch":
         # Validate input file exists
@@ -98,7 +98,9 @@ def main(argv=None):
             print(f"Error: File encoding issue in '{args.input}': {e}", file=sys.stderr)
             return 1
 
-        out_fields = fieldnames + ["overall_urgency", "integrity_status", "total_alerts", "audit_hash"]
+        out_fields = list(dict.fromkeys(
+            fieldnames + ["overall_urgency", "integrity_status", "total_alerts", "audit_hash"]
+        ))
         out_rows = []
         skipped = 0
         for idx, r in enumerate(rows):
@@ -117,6 +119,10 @@ def main(argv=None):
                 row_dict["integrity_status"] = dossier.integrity_status.value
                 row_dict["total_alerts"] = dossier.total_alerts
                 row_dict["audit_hash"] = dossier.audit_hash
+                # Prevent spreadsheet formula execution on CSV export.
+                for key, value in row_dict.items():
+                    if isinstance(value, str) and value.lstrip().startswith(("=", "+", "-", "@")):
+                        row_dict[key] = "'" + value
                 out_rows.append(row_dict)
             except (ValueError, TypeError) as e:
                 print(f"Warning: Skipping row {idx + 1} due to invalid data: {e}", file=sys.stderr)

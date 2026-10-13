@@ -1,13 +1,14 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "pathmind-copilot"
 version = "1.0.0"
-description = "Autonomous Digital Pathology Diagnostic Supervision & Synoptic Reporting Engine System."
+description = "Rule-based pathology synoptic draft review and analytical task evaluation"
 readme = "README.md"
-authors = [{ name = "Dr. Abu Suraih Sakhri", email = "abusuraih@example.com" }]
+requires-python = ">=3.9"
+authors = [{ name = "Dr. Abu Suraih Sakhri" }]
 license = { text = "MIT" }
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -15,12 +16,22 @@ classifiers = [
     "Operating System :: OS Independent",
     "Topic :: Scientific/Engineering :: Medical Science Apps.",
 ]
-requires-python = ">=3.9"
-dependencies = []
+dependencies = ["pydantic>=2,<3"]
+
+[project.optional-dependencies]
+server = ["fastapi>=0.110,<1", "uvicorn>=0.27,<1"]
+test = ["pytest>=8,<10", "httpx>=0.27,<1"]
 
 [project.scripts]
 pathmind = "pathmind.cli:main"
+pathmind-ops = "cli:main"
 
 [project.urls]
 Homepage = "https://github.com/abusuraihsakhri/pathmind-copilot"
-Repository = "https://github.com/abusuraihsakhri/pathmind-copilot.git"
+Repository = "https://github.com/abusuraihsakhri/pathmind-copilot"
+
+[tool.setuptools]
+py-modules = ["cli", "enrichment", "simulator", "pathmind_app"]
+
+[tool.setuptools.packages.find]
+include = ["agents*", "pathmind*"]

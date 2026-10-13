@@ -68,7 +68,8 @@ class AuditTrail:
 
     def log(self, actor: str, actor_tier: str, event_type: str, details: Dict[str, Any]) -> Dict[str, Any]:
         payload_str = json.dumps(details, sort_keys=True)
-        assert_no_phi(payload_str)
+        for value in (actor, actor_tier, event_type, payload_str):
+            assert_no_phi(value)
         payload_hash = hashlib.sha256(payload_str.encode("utf-8")).hexdigest()
         audit_id = f"AUDIT-{int(time.time()*1000)}-{len(self.logs)+1}"
         ts = datetime.now(timezone.utc).isoformat()
@@ -86,17 +87,38 @@ class AuditTrail:
             "current_hash": signature,
         }
         self.logs.append(entry)
-        return entry
+        return entry.copy()
 
     def verify_integrity(self) -> bool:
-        for i, entry in enumerate(self.logs):
-            prev = self.logs[i-1]["current_hash"] if i > 0 else "GENESIS_BLOCK_0000000000000000"
+        """Verify every stored HMAC and the order of the complete chain."""
+        prev = "GENESIS_BLOCK_0000000000000000"
+        required = (
+            "audit_id", "timestamp", "actor", "actor_tier", "event_type",
+            "payload_hash", "prev_hash", "current_hash",
+        )
+        for entry in self.logs:
+            if not isinstance(entry, dict) or any(key not in entry for key in required):
+                return False
+            if not all(isinstance(entry[key], str) for key in required):
+                return False
             if entry["prev_hash"] != prev:
                 return False
+            sign_string = "|".join((
+                entry["audit_id"], entry["timestamp"], entry["actor"],
+                entry["actor_tier"], entry["event_type"],
+                entry["payload_hash"], entry["prev_hash"],
+            ))
+            expected = hmac.new(
+                self.secret_key, sign_string.encode("utf-8"), hashlib.sha256
+            ).hexdigest()
+            if not hmac.compare_digest(expected, entry["current_hash"]):
+                return False
+            prev = entry["current_hash"]
         return True
 
     def get_trail(self) -> List[Dict[str, Any]]:
-        return self.logs
+        """Return a snapshot; callers must not be able to mutate the ledger."""
+        return [entry.copy() for entry in self.logs]
 
 
 _GLOBAL_AUDIT: Optional[AuditTrail] = None

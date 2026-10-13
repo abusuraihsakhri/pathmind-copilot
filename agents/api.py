@@ -4,7 +4,10 @@ FastAPI REST API Server for Pathmind Copilot.
 import hmac
 import os
 
+from pathlib import Path
+
 from fastapi import FastAPI, Header, HTTPException
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from .base import AuditLogger, PHIGuard, SecurityException
 from .models import SystemTaskPayload, ConsensusDossier
@@ -64,3 +67,9 @@ def api_audit_logs(x_audit_token: str = Header(default="")):
     if not hmac.compare_digest(x_audit_token, configured_token):
         raise HTTPException(status_code=403, detail="Audit log access denied")
     return {"audit_trail": AuditLogger.get_trail(), "verified": AuditLogger.verify_integrity()}
+
+
+# Mount only after the API routes, so /api/* and /health remain authoritative.
+_WEB_DIR = Path(__file__).resolve().parent.parent / "web"
+if _WEB_DIR.is_dir():
+    app.mount("/", StaticFiles(directory=_WEB_DIR, html=True), name="console")

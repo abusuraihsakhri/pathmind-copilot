@@ -17,7 +17,7 @@ supervisor = SystemSupervisor(model_provider="mock")
 
 app = FastAPI(
     title="Pathmind Copilot API",
-    description="Enterprise Distributed Component Platform (Clinical & Biomedical AI)",
+    description="Deterministic rule demonstration for synthetic analytical tasks",
     version="3.0.0-ENTERPRISE",
 )
 
@@ -28,7 +28,7 @@ class ChatRequest(BaseModel):
 
 @app.get("/health")
 def health():
-    return {"status": "HEALTHY", "service": "pathmind-copilot", "domain": "Clinical & Biomedical AI", "standard": "CAP / CLSI / ISO Standards", "version": "3.0.0-ENTERPRISE"}
+    return {"status": "HEALTHY", "service": "pathmind-copilot", "domain": "Clinical & Biomedical AI", "standard": "ILLUSTRATIVE_RULES_ONLY", "version": "3.0.0-ENTERPRISE"}
 
 
 @app.get("/metrics")

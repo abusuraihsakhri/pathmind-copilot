@@ -149,7 +149,8 @@ def main(argv=None):
         print("=" * 80)
         print(f"  PATHMIND COPILOT DIAGNOSTIC SUPERVISION REPORT: {dossier['case_id']}")
         print(f"  Site: {dossier['organ_site']} | Type: {dossier['histologic_type']}")
-        print(f"  Sign-Off Status: [{dossier['signoff_readiness']}] | Alerts: {dossier['total_alerts']}")
+        print(f"  Heuristic Status: [{dossier['signoff_readiness']}] | Alerts: {dossier['total_alerts']}")
+        print("  DEMONSTRATION ONLY — this is not clinical sign-out authorization.")
         print("=" * 80)
 
         if not dossier["alerts"]:

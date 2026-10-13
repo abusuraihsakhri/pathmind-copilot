@@ -41,8 +41,10 @@ def test_audit_readers_cannot_modify_ledger():
     snapshot = trail.get_trail()
     snapshot[0]["event_type"] = "FORGED"
     snapshot.clear()
+    entry = trail.log("worker", "tier", "UPDATED", {"status": "OK"})
+    entry["event_type"] = "FORGED"
     assert trail.verify_integrity()
-    assert len(trail.logs) == 1
+    assert len(trail.logs) == 2
 
 
 @pytest.mark.parametrize("invalid", [float("nan"), float("inf"), float("-inf")])

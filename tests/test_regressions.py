@@ -96,7 +96,7 @@ def test_csv_formula_escaping_and_unique_columns(tmp_path, monkeypatch):
     monkeypatch.setenv("AUDIT_SECRET_KEY", "test-only-key")
     inp = tmp_path / "in.csv"
     out = tmp_path / "out.csv"
-    inp.write_text("task_id,target_identifier,primary_metric,overall_urgency\\n=2+2,KEY,2,CUSTOM\\n", encoding="utf-8")
+    inp.write_text("task_id,target_identifier,primary_metric,overall_urgency\n=2+2,KEY,2,CUSTOM\n", encoding="utf-8")
     assert operations_main(["batch", "-i", str(inp), "-o", str(out)]) == 0
     with out.open(encoding="utf-8", newline="") as stream:
         rows = list(csv.DictReader(stream))
